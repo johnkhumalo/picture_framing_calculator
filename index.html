@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <h1>Pure Canvas Factory </h1>
+    <title>Framing Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="submit"] {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        #result {
+            display: none;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Framing Calculator</h1>
+    <form id="framingForm">
+        <label for="frameProfile">Frame Profile:</label>
+        <input type="text" id="frameProfile" name="frameProfile" required><br>
+        
+        <label for="artworkWidth">Artwork Width (mm):</label>
+        <input type="number" id="artworkWidth" name="artworkWidth" required><br>
+        
+        <label for="artworkHeight">Artwork Height (mm):</label>
+        <input type="number" id="artworkHeight" name="artworkHeight" required><br>
+        
+        <label for="matteBoard">Matte Board:</label>
+        <input type="checkbox" id="matteBoard" name="matteBoard"><br>
+        
+        <div id="matteBoardSize" style="display: none;">
+            <label for="matteBoardSize">Matte Board Size (mm):</label>
+            <input type="number" id="matteBoardSizeInput" name="matteBoardSize">
+        </div>
+        
+        <label for="glass">Glass:</label>
+        <input type="checkbox" id="glass" name="glass"><br>
+        
+        <input type="submit" value="Calculate">
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('framingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var form = event.target;
+            var frameProfile = form['frameProfile'].value;
+            var artworkWidth = parseFloat(form['artworkWidth'].value);
+            var artworkHeight = parseFloat(form['artworkHeight'].value);
+            var matteBoard = form['matteBoard'].checked;
+            var matteBoardSize = parseFloat(form['matteBoardSize'].value) || 0;
+            var glass = form['glass'].checked;
+
+            // Check if frame profile exists in the database
+            var frameProfiles = {
+                "1065C": {"price": 119.8, "base_width": 80},
+                "601T" : {"price": 26.42, "base_width": 31},
+                "601ZB": {"price": 26.42, "base_width": 31},
+                "601ZF": {"price": 26.42, "base_width": 31},
+                "601ZJ": {"price": 26.42, "base_width": 31}, 
+                "605J" : {"price": 56.44, "base_width": 42}, 
+                "627Q" : {"price": 31.61, "base_width": 32}, 
+                "627X" : {"price": 31.61, "base_width": 32}, 
+                "627ZA": {"price": 31.61, "base_width": 32}, 
+                "627ZB": {"price": 31.61, "base_width": 32}, 
+                "627H" : {"price": 31.61, "base_width": 32}, 
+                "627NF": {"price": 31.61, "base_width": 32}, 
+                "628A" : {"price": 23.40, "base_width": 19}, 
+                "628B" : {"price": 23.40, "base_width": 19}, 
+                "628H" : {"price": 23.40, "base_width": 19}, 
+                "708A" : {"price": 17.18, "base_width": 15}, 
+                "708B" : {"price": 17.18, "base_width": 15}, 
+                "708H" : {"price": 17.18, "base_width": 15}, 
+                "708I" : {"price": 17.18, "base_width": 15}, 
+                "708K" : {"price": 17.18, "base_width": 15}, 
+                "708N" : {"price": 17.18, "base_width": 15}, 
+                "708O" : {"price": 17.18, "base_width": 15}, 
+                "708Q" : {"price": 17.18, "base_width": 15}, 
+                "709A":  {"price": 17.18, "base_width": 12}, 
+                "709AW": {"price": 17.18, "base_width": 12}, 
+                "709B" : {"price": 17.18, "base_width": 12}, 
+                "709D" : {"price": 17.18, "base_width": 12}, 
+                "709E" : {"price": 17.18, "base_width": 12}, 
+                "709I": {"price": 17.18, "base_width": 12}, 
+                "709K": {"price": 17.18, "base_width": 12}, 
+                "709M": {"price": 17.18, "base_width": 12}, 
+                "717A": {"price": 23.40, "base_width": 14}, 
+                "717C": {"price": 23.40, "base_width": 14}, 
+                "726A": {"price": 36.67, "base_width": 33}, 
+                "726B": {"price": 36.67, "base_width": 33}, 
+                "737A": {"price": 47.86, "base_width": 41}, 
+                "737B": {"price": 47.86, "base_width": 41}, 
+                "737C": {"price": 47.86, "base_width": 41}, 
+                "749B": {"price": 105.50, "base_width": 76}, 
+                "749C": {"price": 105.50, "base_width": 76}, 
+                "749D": {"price": 105.50, "base_width": 76}, 
+                "749E": {"price": 105.5, "base_width": 76}, 
+                "749F": {"price": 105.5, "base_width": 76}, 
+                "749G": {"price": 105.5, "base_width":76}, 
+                "749H": {"price": 105.5, "base_width":76}, 
+                "749I": {"price": 105.5, "base_width":76}, 
+                "749R": {"price": 105.5, "base_width": 76}, 
+                "759D": {"price": 29.95, "base_width": 30},
+                "759J": {"price": 29.95, "base_width": 30}, 
+                "763P": {"price": 45.90, "base_width": 41}, 
+                "763Q": {"price": 45.90, "base_width": 41}, 
+                "805E": {"price": 37.47, "base_width": 40}, 
+                "805G": {"price": 37.47, "base_width": 40}, 
+                "843C": {"price": 110.10, "base_width": 62}, 
+                "843E": {"price": 110.10, "base_width": 62}, 
+                "845C": {"price": 69.85, "base_width": 49},
+                "846B": {"price": 102.84, "base_width": 94}, 
+                "848B": {"price": 27.61, "base_width": 20}, 
+                "848C": {"price": 27.61, "base_width": 20}, 
+                "848D": {"price": 27.61, "base_width": 20}, 
+                "860A": {"price": 43.15, "base_width": 41}, 
+                "860B": {"price": 43.15, "base_width": 41},
+                "862A": {"price": 43.15, "base_width": 31}, 
+                "862B": {"price": 43.15, "base_width": 31},
+                "864B": {"price": 27.61, "base_width": 20},
+                "869D": {"price": 29.91, "base_width": 30}, 
+                "869J": {"price": 29.91, "base_width": 30}, 
+                "869L": {"price": 29.91, "base_width": 30},
+                "869M": {"price": 29.91, "base_width": 30}, 
+                "869-3Q": {"price": 29.91, "base_width": 30}, 
+                "870A": {"price": 135.75, "base_width": 107}, 
+                "870B": {"price": 135.75, "base_width": 107}, 
+                "873C": {"price": 56.88, "base_width": 20},
+                "890B": {"price": 164.14, "base_width": 108},
+                "890C": {"price": 164.14, "base_width": 108},
+                "890D": {"price": 164.14, "base_width": 108},
+                "890F": {"price": 164.14, "base_width": 108},
+                "890H": {"price": 164.14, "base_width": 108},
+                "892A": {"price": 152.47, "base_width": 108},
+                "896B": {"price": 86.73, "base_width": 70},
+                "1009A": {"price": 238.37, "base_width": 130},
+                "1017C": {"price": 32.78, "base_width": 25},
+                "1017D": {"price": 32.78, "base_width": 25},
+                "1018C": {"price": 32.78, "base_width": 25},
+                "1018D": {"price": 32.78, "base_width": 25},
+                "1018G": {"price": 32.78, "base_width": 25},
+                "1023B": {"price": 79.95, "base_width": 75},
+                "1023C": {"price": 79.95, "base_width": 75},
+                "1023E": {"price": 79.95, "base_width": 75},
+                "1023F": {"price": 79.95, "base_width": 75},
+                "1023G": {"price": 79.95, "base_width": 75},
+                "1024B": {"price": 37.36, "base_width": 45},
+                "1024C": {"price": 37.36, "base_width": 45},
+                "1024D": {"price": 37.36, "base_width": 45},
+                "1024E": {"price": 37.36, "base_width": 45},
+                "1024F": {"price": 37.36, "base_width": 45},
+                "1024G": {"price": 37.36, "base_width": 45},
+                "1024-3K": {"price": 37.36, "base_width": 45},
+                "1041D": {"price": 99.55, "base_width": 95},
+                "1041E": {"price": 99.55, "base_width": 95},
+                "1024B": {"price": 29.91, "base_width": 30},
+                "1042C": {"price": 29.91, "base_width": 30},
+                "1042D": {"price": 29.91, "base_width": 30},
+                "1042E": {"price": 29.91, "base_width": 30},
+                "1042F": {"price": 29.91, "base_width": 30},
+                "1042G": {"price": 29.91, "base_width": 30},
+                "1043A": {"price": 26.92, "base_width": 28},
+                "1043B": {"price": 26.92, "base_width": 28},
+                "1043C": {"price": 26.92, "base_width": 28},
+                "1046A": {"price": 72.31, "base_width": 63},
+                "1046B": {"price": 72.31, "base_width": 63},
+                "1047B": {"price": 87.85, "base_width": 70},
+                "1053A": {"price": 46.86, "base_width": 35},
+                "1053D": {"price": 46.86, "base_width": 35},
+                "1055B": {"price": 49.85, "base_width": 50},
+                "1055C": {"price": 49.85, "base_width": 50},
+                "1055D": {"price": 49.85, "base_width": 50},
+                "1055E": {"price": 49.85, "base_width": 50},
+                "1055F": {"price": 49.85, "base_width": 50},
+                "1055G": {"price": 49.85, "base_width": 50},
+                "1061B": {"price": 53.95, "base_width": 32},
+                "1061D": {"price": 53.95, "base_width": 32},
+                "1061K": {"price": 53.95, "base_width": 32},
+                "1061-3L": {"price": 53.95, "base_width": 32},
+                "1061-3M": {"price": 53.95, "base_width": 32},
+                "1061-3W": {"price": 53.95, "base_width": 32},
+                "1061-1A": {"price": 53.95, "base_width": 32},
+                "1062A": {"price": 29.91, "base_width": 30},
+                "1062B": {"price": 29.91, "base_width": 30},
+                "1062C": {"price": 29.91,"base_width": 30},
+                "1064E": {"price": 99.95, "base_width": 95},
+                "1065D": {"price": 119.77, "base_width": 90},
+                "1065E": {"price": 119.77, "base_width": 90},
+                "1065F": {"price": 119.77, "base_width": 90},
+                "1065H": {"price": 119.77, "base_width": 90},
+                "1065J": {"price": 119.77, "base_width": 90},
+                "1065K": {"price": 119.77, "base_width": 90},
+                "1065M": {"price": 119.77, "base_width": 90},
+                "1065-3A": {"price": 119.77, "base_width": 90},
+                "1066A": {"price": 86.61, "base_width": 44},
+                "1066F": {"price": 86.61, "base_width": 44},
+                "1066J": {"price": 86.61, "base_width": 44},
+                "1067A": {"price": 52.43, "base_width": 25},
+                "1067F": {"price": 52.43, "base_width": 25},
+                "1068F": {"price": 105.32, "base_width": 45},
+                "1070D": {"price": 64.26, "base_width": 55},
+                "1071D": {"price": 58.59, "base_width": 60},
+                "1071A": {"price": 58.59, "base_width": 60},
+                "1086A": {"price": 72.90, "base_width": 58},
+                "1086B": {"price": 72.90, "base_width": 58},
+                "1086C": {"price": 72.90, "base_width": 58},
+                "1086D": {"price": 72.90, "base_width": 58},
+                "1087B": {"price": 23.95, "base_width": 22},
+                "1087C": {"price": 23.95, "base_width": 22},
+                "1087E": {"price": 23.95, "base_width": 22},
+                "1087F": {"price": 23.95, "base_width": 22},
+                "1087G": {"price": 23.95, "base_width": 22},
+                "1090B": {"price": 38.65, "base_width": 30},
+                "1090C": {"price": 38.65, "base_width": 30},
+                "1090D": {"price": 38.65, "base_width": 30},
+                "1091A": {"price": 27.60, "base_width": 20},
+                "1095A": {"price": 107.51, "base_width":70},
+                "1095I": {"price": 107.51, "base_width":70},
+                "1095J": {"price": 107.51, "base_width":70},
+                "1096A": {"price": 152.87, "base_width":38},
+                "1100K": {"price": 35.30, "base_width":20},
+                "1100W": {"price": 35.30, "base_width":20},
+                "1102N": {"price": 27.56, "base_width":16},
+                "1106H": {"price": 29.91, "base_width":30},
+                "1106J": {"price": 29.91, "base_width":30},
+                "1109A": {"price": 53.95, "base_width":40},
+                "1109B": {"price": 53.95, "base_width":40},
+                "1109D": {"price": 53.95, "base_width":40},
+                "1110C": {"price": 89.54, "base_width":70},
+                "1110W": {"price": 89.54, "base_width":70},
+                "1112A": {"price": 116.70, "base_width":87},
+                "1112B": {"price": 116.70, "base_width":87},
+                "1112C": {"price": 116.70, "base_width":87},
+                "1113A": {"price": 97.70, "base_width":72},
+                "1113B": {"price": 97.70, "base_width":72},
+                "1114B": {"price": 75.55, "base_width":63},
+                "1115B": {"price": 105.50, "base_width":90},
+                "1116A": {"price": 88.34, "base_width":43},
+                "1116B": {"price": 88.34, "base_width":43},
+                "1116W": {"price": 88.34, "base_width":43},
+                "1116-3K": {"price": 88.34, "base_width":43},
+                "1122B": {"price": 35.50, "base_width":42},
+                "1122C": {"price": 35.50, "base_width":42},
+                "1122D": {"price": 35.50, "base_width":42},
+                "1122E": {"price": 35.50, "base_width":42},
+                "1122H": {"price": 35.50, "base_width":42},
+                "1122K": {"price": 35.50, "base_width":42},
+                "1122L": {"price": 35.50, "base_width":42},
+                "1122R": {"price": 35.50, "base_width":42},
+                "1122S": {"price": 35.50, "base_width":42},
+                "1122W": {"price": 35.50, "base_width":42},
+                "1123B": {"price": 66.79, "base_width":59},
+                "1123D": {"price": 66.79, "base_width":59},
+                "1123E": {"price": 66.79, "base_width":59},
+                "1123F": {"price": 66.79, "base_width":59},
+                "1123L": {"price": 66.79, "base_width":59},
+                "1123R": {"price": 66.79, "base_width":59},
+                "1123-3K": {"price": 66.79, "base_width":59},
+                "1123-3M": {"price": 66.79, "base_width":59},
+                "1123-3P": {"price": 66.79, "base_width":59},
+                "1124C": {"price": 49.63, "base_width":24},
+                "1124H": {"price": 49.63, "base_width":24},
+                "1124K": {"price": 49.63, "base_width":24},
+                "1124W": {"price": 49.63, "base_width":24},
+                "1128A": {"price": 26.95, "base_width":20},
+                "1128C": {"price": 26.95, "base_width":20},
+                "1128F": {"price": 26.95, "base_width":20},
+                "1128G": {"price": 26.95, "base_width":20},
+                "1128H": {"price": 26.95, "base_width":20},
+                "1128R": {"price": 26.95, "base_width":20},
+                "1128S": {"price": 26.95, "base_width":20},
+                "1128W": {"price": 26.95, "base_width":20},
+                "1128Z": {"price": 26.95, "base_width":20},
+                "1128-3K": {"price": 26.95, "base_width":20},
+                "1128-3P": {"price": 26.95, "base_width":20},
+                "1129F": {"price": 29.91, "base_width":30},
+                "1129H": {"price": 29.91, "base_width":30},
+                "1129J": {"price": 29.91, "base_width":30},
+                "1129R": {"price": 29.91, "base_width":30},
+                "1129S": {"price": 29.91, "base_width":30},
+                "1129W": {"price": 29.91, "base_width":30},
+                "1131H": {"price": 47.36, "base_width":44},
+                "1132H": {"price": 29.91, "base_width":30},
+                "1135A": {"price": 64.55, "base_width":55},
+                "1135B": {"price": 64.55, "base_width":55},
+                "1135E": {"price": 64.55, "base_width":55},
+                "1136W": {"price": 46.86, "base_width":23},
+                "1137B": {"price": 65.92, "base_width":34},
+                "1137W": {"price": 65.92, "base_width":34},
+                "1138B": {"price": 105.32, "base_width":44},
+                "1138W": {"price": 105.32, "base_width":44},
+                "1139J": {"price": 86.44, "base_width":50},
+                "1139L": {"price": 86.44, "base_width":50},
+                "1139M": {"price": 86.44, "base_width":50},
+                "1139N": {"price": 86.44, "base_width":50},
+                "1139P": {"price": 86.44, "base_width":50},
+                "1143B": {"price": 94.42, "base_width":72},
+                "1143B": {"price": 94.42, "base_width":72},
+                "1153A": {"price": 44.85, "base_width":30},
+                "1153B": {"price": 44.85, "base_width":30},
+                "1153D": {"price": 44.85, "base_width":30},
+                "1153E": {"price": 44.85, "base_width":30},
+                "1153-3K": {"price": 44.85, "base_width":30},
+                "1153-3P": {"price": 44.85, "base_width":30},
+                "1155A": {"price": 61.03, "base_width":34},
+                "1155D": {"price": 61.03, "base_width":34},
+                "1156B": {"price": 39.82, "base_width":40},
+                "1156D": {"price": 39.82, "base_width":40},
+                "1156H": {"price": 39.82, "base_width":40},
+                "1156I": {"price": 39.82, "base_width":40},
+                "1156J": {"price": 39.82, "base_width":40},
+                "1156K": {"price": 39.82, "base_width":40},
+                "1157B": {"price": 35.30, "base_width":20},
+                "1157C": {"price": 35.30, "base_width":20},
+                "1157E": {"price": 35.30, "base_width":20},
+                "1157F": {"price": 35.30, "base_width":20},
+                "1158B": {"price": 62.87, "base_width":30},
+                "1158W": {"price": 62.87, "base_width":30},
+                "1158-3K": {"price": 62.87, "base_width":30},
+                "1158-3P": {"price": 62.87, "base_width":30},
+                "1159A": {"price": 33.95, "base_width":16},
+                "1159B": {"price": 33.95, "base_width":16},
+                "1159C": {"price": 33.95, "base_width":16},
+                "1159N": {"price": 33.95, "base_width":16},
+                "1159R": {"price": 33.95, "base_width":16},
+                "1159S": {"price": 33.95, "base_width":16},
+                "1159T": {"price": 33.95, "base_width":16},
+                "1159U": {"price": 33.95, "base_width":16},
+                "1159W": {"price": 33.95, "base_width":16},
+                "1159Z": {"price": 33.95, "base_width":16},
+                "1159-3K": {"price": 33.95, "base_width":16},
+                "1159-3P": {"price": 33.95, "base_width":16},
+                "1159D": {"price": 33.95, "base_width":16},
+                "1160A": {"price": 38.83, "base_width":40},
+                "1161A": {"price": 35.66, "base_width":20},
+                "1161B": {"price": 35.66, "base_width":20},
+                "1161C": {"price": 35.66, "base_width":20},
+                "1161D": {"price": 35.66, "base_width":20},
+                "1161E": {"price": 35.66, "base_width":20},
+                "1161F": {"price": 35.66, "base_width":20},
+                "1161W": {"price": 35.66, "base_width":20},
+                "1161-3K": {"price": 35.66, "base_width":20},
+                "1161-3P": {"price": 35.66, "base_width":20},
+                "1162-1A": {"price": 67.85, "base_width":50},
+                "1166D": {"price": 35.75, "base_width":28},
+                "1166E": {"price": 35.75, "base_width":28},
+                "1166-1A": {"price": 38.45, "base_width":28},
+                "1166-1B": {"price": 38.45, "base_width":28},
+                "1166-1C": {"price": 38.45, "base_width":28},
+                "1167-1A": {"price": 36.75, "base_width":26},
+                "1167-1B": {"price": 36.75, "base_width":26},
+                "1167-1C": {"price": 36.75, "base_width":26},
+                "1167-1D": {"price": 36.75, "base_width":26},
+                "1168A": {"price": 55.71, "base_width":20},
+                "1168B": {"price": 55.71, "base_width":20},
+                "1168C": {"price": 55.71, "base_width":20},
+                "1168D": {"price": 55.71, "base_width":20},
+                "1168E": {"price": 55.71, "base_width":20},
+                "1168F": {"price": 55.71, "base_width":20},
+                "1168G": {"price": 55.71, "base_width":20},
+                "1168H": {"price": 55.71, "base_width":20},
+                "1168I": {"price": 55.71, "base_width":20},
+                "1169D": {"price": 51.59, "base_width":25},
+                "1169W": {"price": 51.59, "base_width":25},
+                "1169-3K": {"price": 51.59, "base_width":25},
+                "1169-3P": {"price": 51.59, "base_width":25},
+                "1170C": {"price": 99.95, "base_width":50},
+                "1170W": {"price": 99.95, "base_width":50},
+                "1170-3K": {"price": 99.95, "base_width":50},
+                "1170-3M": {"price": 99.95, "base_width":50},
+                "1171B": {"price": 69.85, "base_width":28},
+                "1171W": {"price": 69.85, "base_width":28},
+                "1171-3A": {"price": 69.85, "base_width":28},
+                "1171-3C": {"price": 69.85, "base_width":28},
+                "1171-3D": {"price": 69.85, "base_width":28},
+                "1171-3K": {"price": 69.85, "base_width":28},
+                "1172B": {"price": 79.95, "base_width":24},
+                "1172W": {"price": 79.95, "base_width":24},
+                "1172-1M": {"price": 79.95, "base_width":24},
+                "1172-3K": {"price": 79.95, "base_width":24}
+                // Add more frame profiles here
+            };
+
+            if (!frameProfiles.hasOwnProperty(frameProfile)) {
+                // Display error message and return
+                document.getElementById('result').innerHTML = 'Invalid frame profile. Please enter a valid frame profile.';
+                document.getElementById('result').style.display = 'block';
+                return;
+            }
+
+            // Adjust artwork dimensions if matte board is selected
+            if (matteBoard) {
+                artworkWidth += 2 * matteBoardSize;
+                artworkHeight += 2 * matteBoardSize;
+            }
+
+            // Calculate perimeter in meters
+            var perimeter = (2 * artworkWidth + 2 * artworkHeight) / 1000;
+            var area = (artworkWidth * artworkHeight/1000000);
+
+            // Example prices (replace with actual logic)
+            var frameProfilePrice = frameProfiles[frameProfile].price;
+            var glassPricePerSquareMeter = 210;
+            var matteBoardPricePerSquareMeter = 299.9;
+            var laborPricePerSquareMeter = 430 / 0.999;
+
+            // Calculate selling price components
+            var sellingPrice = perimeter * frameProfilePrice * 2.5;
+            var glassPrice = glass ? (artworkWidth * artworkHeight / 1000000) * glassPricePerSquareMeter : 0;
+            var matteBoardPrice = matteBoard ? (artworkWidth * artworkHeight / 1000000) * matteBoardPricePerSquareMeter : 0;
+            var backingBoardPrice = glassPrice; // Same price as glass
+            var laborPrice = area * laborPricePerSquareMeter;
+
+            // Calculate total selling price
+            var totalPrice = sellingPrice + glassPrice + matteBoardPrice + backingBoardPrice + laborPrice;
+            var totalSellingPrice = totalPrice * 1.30;
+
+            // Display the total selling price
+            document.getElementById('result').innerHTML = 'Total Selling Price: R' + totalSellingPrice.toFixed(2);
+            document.getElementById('result').style.display = 'block';
+        });
+
+        // Show/hide matte board size input based on checkbox state
+        document.getElementById('matteBoard').addEventListener('change', function(event) {
+            var matteBoardSizeInput = document.getElementById('matteBoardSize');
+            matteBoardSizeInput.style.display = event.target.checked ? 'block' : 'none';
+        });
+    </script>
+</body>
+</html>
